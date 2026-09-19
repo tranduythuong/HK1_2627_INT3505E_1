@@ -1,5 +1,6 @@
-from flask import Flask, jsonify, request, make_response
+from flask import Flask, json, jsonify, request, make_response
 import sqlite3
+import hashlib
 
 app = Flask(__name__)
 
@@ -303,15 +304,49 @@ def get_book(book_id):
 
     conn.close()
 
+    # 1. Kiểm tra book có tồn tại không
     if book is None:
         return jsonify({
             'error': 'Book not found'
         }), 404
 
-    return jsonify({
-        'status': 'success',
-        'book': dict(book)
-    }), 200
+    # 2. Chuyển Row -> dictionary
+    book_dict = dict(book)
+
+    # 3. Tạo chuỗi JSON để tạo ETag
+    book_json = json.dumps(
+        book_dict,
+        sort_keys=True
+    )
+
+    # 4. Tạo ETag
+    etag = hashlib.md5(
+        book_json.encode()
+    ).hexdigest()
+
+    # Thêm dấu " vào ETag
+    etag = f'"{etag}"'
+
+    # 5. Lấy If-None-Match từ request
+    client_etag = request.headers.get("If-None-Match")
+
+    # 6. So sánh
+    if client_etag == etag:
+        return '', 304
+
+    # 7. Nếu khác → trả dữ liệu
+    res = make_response(
+        jsonify({
+            'status': 'success',
+            'book': book_dict
+        }),
+        200
+    )
+
+    # 8. Gửi ETag cho client
+    res.headers["ETag"] = etag
+
+    return res
 
 
 # =========================================================

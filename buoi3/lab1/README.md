@@ -26,7 +26,7 @@ POS/api/v1/posts
 ___________________
 
 
-
+## Sơ đồ Resources
 
 ```mermaid
 flowchart TD

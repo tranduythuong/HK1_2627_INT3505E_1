@@ -1,7 +1,9 @@
-from venv import logger
+import logging
 
 from flask import jsonify, request
 from werkzeug.exceptions import HTTPException
+
+logger = logging.getLogger(__name__)
 
 
 class ProblemError(Exception):
@@ -15,6 +17,7 @@ class ProblemError(Exception):
 
 
 def register_error_handler(app):
+
     @app.errorhandler(ProblemError)
     def handle_problem_error(error):
         response = jsonify({
@@ -23,8 +26,10 @@ def register_error_handler(app):
             "status": error.status,
             "detail": error.detail,
         })
+
         response.status_code = error.status
         response.content_type = "application/problem+json"
+
         return response
 
     @app.errorhandler(HTTPException)
@@ -35,9 +40,12 @@ def register_error_handler(app):
             "status": error.code,
             "detail": error.description,
         })
+
         response.status_code = error.code
         response.content_type = "application/problem+json"
+
         return response
+
     @app.errorhandler(Exception)
     def handle_unexpected_exception(error):
         logger.exception(
@@ -53,6 +61,8 @@ def register_error_handler(app):
             "detail": "An unexpected error occurred.",
             "instance": request.path,
         })
+
         response.status_code = 500
         response.content_type = "application/problem+json"
+
         return response

@@ -1,0 +1,10 @@
+POST /api/v1/users/42/cart/items
+GET /api/v1/users/42/cart/items
+DELETE /api/v1/users/42/cart/items/99
+POST /api/v1/users/42/orders
+POST /api/v1/orders
+GET /api/v1/orders/1001
+GET /api/v1/users/42/orders
+GET /api/v1/products?category=phones
+POST /api/v1/auth/login
+POST /api/v1/users

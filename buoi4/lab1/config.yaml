@@ -1,0 +1,332 @@
+openapi: 3.0.3
+
+info:
+  title: Tasks API
+  version: 1.0.0
+  description: API quản lý công việc nội bộ (Tasks Management)
+
+servers:
+  - url: http://localhost:5000/v1
+    description: Local Development Server
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: tasks
+    description: Quản lý công việc (Tasks)
+
+paths:
+  /tasks:
+    get:
+      tags: [tasks]
+      summary: Lấy danh sách công việc
+      operationId: listTasks
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [open, in_progress, done]
+          example: open
+
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+          example: 10
+
+      responses:
+        '200':
+          description: Danh sách task được lấy thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+      
+
+    post:
+      tags: [tasks]
+      summary: Tạo mới một task
+      operationId: createTask
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskInput'
+
+      responses:
+        '201':
+          description: Tạo task thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tasks/{taskId}:
+    parameters:
+      - name: taskId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        example: "123e4567-e89b-12d3-a456-426614174000"
+
+    get:
+      tags: [tasks]
+      summary: Lấy thông tin chi tiết một task theo ID
+      operationId: getTaskById
+
+      responses:
+        '200':
+          description: Chi tiết task
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [tasks]
+      summary: Cập nhật một phần thông tin task
+      operationId: patchTask
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskInput'
+
+      responses:
+        '200':
+          description: Cập nhật thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [tasks]
+      summary: Xóa một task
+      operationId: deleteTask
+    
+
+      responses:
+        '204':
+          description: Xóa thành công (Không trả về content)
+
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - status
+        - priority
+
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+
+        title:
+          type: string
+          minLength: 1
+          example: "Họp review thiết kế API"
+
+        status:
+          type: string
+          enum:
+            - open
+            - in_progress
+            - done
+          example: "open"
+
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+          example: "high"
+
+        dueDate:
+          type: string
+          format: date
+          example: "2026-10-15"
+
+        assigneeId:
+          type: string
+          format: uuid
+          example: "987e6543-e21b-12d3-a456-426614174000"
+
+
+    CreateTaskInput:
+      type: object
+      required:
+        - title
+
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: "Viết báo cáo tài chính"
+
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+          default: "normal"
+          example: "normal"
+
+        dueDate:
+          type: string
+          format: date
+          example: "2026-11-01"
+
+        assigneeId:
+          type: string
+          format: uuid
+          example: "987e6543-e21b-12d3-a456-426614174000"
+
+
+    UpdateTaskInput:
+      type: object
+
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: "Tên công việc sau cập nhật"
+
+        status:
+          type: string
+          enum:
+            - open
+            - in_progress
+            - done
+          example: "done"
+
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+          example: "low"
+
+        dueDate:
+          type: string
+          format: date
+          example: "2026-12-01"
+
+        assigneeId:
+          type: string
+          format: uuid
+          example: "987e6543-e21b-12d3-a456-426614174000"
+
+
+    Error:
+      type: object
+      required:
+        - status
+        - title
+
+      properties:
+        status:
+          type: integer
+          example: 400
+
+        title:
+          type: string
+          example: "Bad Request"
+
+        detail:
+          type: string
+          example: "Dữ liệu gửi lên không đúng định dạng."
+
+
+  responses:
+
+    BadRequest:
+      description: Lỗi dữ liệu đầu vào (400)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Chưa xác thực Token hoặc Token hết hạn (401)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Không tìm thấy tài nguyên (404)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    ValidationError:
+      description: Dữ liệu gửi lên không vượt qua quy tắc validate (422)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

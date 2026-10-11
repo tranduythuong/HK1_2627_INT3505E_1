@@ -1,0 +1,238 @@
+openapi: 3.0.3
+
+info:
+  title: Tasks API
+  version: 1.0.0
+  description: API quản lý công việc (Tasks Management).
+
+servers:
+  - url: http://127.0.0.1:5000/v1
+    description: Local development server
+
+tags:
+  - name: tasks
+    description: Quản lý công việc
+
+paths:
+  /tasks:
+    get:
+      tags: [tasks]
+      summary: Lấy danh sách công việc
+      operationId: listTasks
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Lọc theo trạng thái công việc
+          schema:
+            type: string
+            enum: [open, in_progress, done]
+          example: open
+        - name: limit
+          in: query
+          required: false
+          description: Số task tối đa được trả về (từ 1 đến 100)
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          example: 10
+      responses:
+        '200':
+          description: Danh sách task được lấy thành công
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    post:
+      tags: [tasks]
+      summary: Tạo mới một task
+      operationId: createTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskInput'
+      responses:
+        '201':
+          description: Tạo task thành công
+          headers:
+            Location:
+              description: URL của task vừa tạo
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tasks/{task_id}:
+    parameters:
+      - $ref: '#/components/parameters/TaskId'
+    get:
+      tags: [tasks]
+      summary: Lấy thông tin chi tiết một task
+      operationId: getTask
+      responses:
+        '200':
+          description: Lấy task thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [tasks]
+      summary: Cập nhật một phần thông tin task
+      operationId: updateTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskInput'
+      responses:
+        '200':
+          description: Cập nhật task thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags: [tasks]
+      summary: Xóa một task
+      operationId: deleteTask
+      responses:
+        '204':
+          description: Xóa task thành công, không có response body
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    TaskId:
+      name: task_id
+      in: path
+      required: true
+      description: ID của task cần thao tác
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+
+  schemas:
+    Task:
+      type: object
+      required: [id, title, description, status, created_by]
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          example: 1
+        title:
+          type: string
+          example: Read REST constraints
+        description:
+          type: string
+          example: Review the REST API notes
+        status:
+          type: string
+          enum: [open, in_progress, done]
+          example: open
+        created_by:
+          type: string
+          example: demo
+
+    CreateTaskInput:
+      type: object
+      required: [title]
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: Finish OpenAPI assignment
+        description:
+          type: string
+          default: ''
+          example: Document and test five endpoints
+        status:
+          type: string
+          enum: [open, in_progress, done]
+          default: open
+        created_by:
+          type: string
+          default: demo
+          example: demo
+
+    UpdateTaskInput:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: Finish OpenAPI assignment
+        description:
+          type: string
+          example: YAML and Swagger UI completed
+        status:
+          type: string
+          enum: [open, in_progress, done]
+          example: done
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [status, message]
+          properties:
+            status:
+              type: integer
+              example: 404
+            message:
+              type: string
+              example: Task not found.
+
+  responses:
+    BadRequest:
+      description: Request không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Dữ liệu đầu vào không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Không tìm thấy task
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

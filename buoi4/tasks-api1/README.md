@@ -1,18 +1,11 @@
-# Tasks API — Flask + apispec + Marshmallow
 
-## Cài đặt (Windows PowerShell)
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe app.py
 ```
 
-Mở:
 - Swagger UI: http://127.0.0.1:5000/docs
 - OpenAPI JSON: http://127.0.0.1:5000/openapi.json
 
-Swagger UI dùng CDN nên cần Internet để tải giao diện.
+
 
 ## Luồng hoạt động theo 4 bước
 
@@ -41,8 +34,4 @@ Schema được định nghĩa một lần và đăng ký vào `APISpec`; Marshm
 
 Mô tả endpoint nằm cạnh hàm Flask tương ứng, giúp tìm code và tài liệu cùng một chỗ. Đổi lại, YAML trong docstring dễ sai indentation hoặc tham chiếu schema sai; cần kiểm tra `/openapi.json` và Swagger UI sau mỗi lần sửa.
 
-## Lưu ý
 
-- Đây là demo học tập, chưa có database hoặc authentication.
-- Nếu mở app bằng `localhost`, Swagger UI sẽ tự dùng host đó; nếu mở bằng `127.0.0.1`, spec cũng dùng đúng host hiện tại.
-- Chụp ảnh màn hình thật sau khi thực hiện request ở Swagger UI và lưu tại `screenshots/swagger-ui.png` nếu cần nộp minh chứng.

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/book.schema.json",
+  "title": "Book",
+  "description": "Thông tin đầu sách trong hệ thống thư viện.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "authors",
+    "isbn",
+    "categoryId",
+    "totalCopies",
+    "availableCopies",
+    "createdAt",
+    "updatedAt"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Mã định danh đầu sách."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 250
+    },
+    "authors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+      }
+    },
+    "isbn": {
+      "type": "string",
+      "pattern": "^(97[89])?[- ]?[0-9Xx -]{10,17}$"
+    },
+    "categoryId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "publisher": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 150
+    },
+    "publishedYear": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 2100
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 5000
+    },
+    "totalCopies": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "availableCopies": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,291 @@
+openapi: 3.1.0
+info:
+  title: Social Network API
+  version: 1.0.0
+  description: >
+    API mẫu cho đăng nhập, làm mới access token và đọc bài viết.
+    
+servers:
+  - url: https://api.example.com/v1
+    description: Production (ví dụ)
+tags:
+  - name: Authentication
+  - name: Posts
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Đăng nhập bằng thông tin tài khoản
+      description: Endpoint công khai; không yêu cầu access token hoặc scope trước khi đăng nhập.
+      operationId: login
+      x-required-scopes: []
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: user@example.com
+              password: example-password
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Thông tin đăng nhập không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: INVALID_CREDENTIALS
+                message: Email hoặc mật khẩu không đúng.
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Cấp access token mới
+      description: Gửi refresh token hợp lệ; nên áp dụng rotation và phát hiện tái sử dụng token.
+      operationId: refreshToken
+      x-required-scopes:
+        - auth:refresh
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Refresh thành công
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Refresh token thiếu, sai, hết hạn, bị thu hồi hoặc đã được sử dụng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: INVALID_REFRESH_TOKEN
+                message: Refresh token không hợp lệ.
+        '403':
+          description: Token hợp lệ nhưng không được phép làm mới theo chính sách
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: REFRESH_NOT_ALLOWED
+                message: Không được phép làm mới phiên này.
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /posts/{id}:
+    get:
+      tags: [Posts]
+      summary: Lấy chi tiết một bài viết
+      operationId: getPostById
+      x-required-scopes:
+        - posts:read
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID bài viết
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+      responses:
+        '200':
+          description: Tìm thấy bài viết và người gọi được phép xem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Thiếu, sai định dạng, hết hạn hoặc chữ ký access token không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: UNAUTHENTICATED
+                message: Cần đăng nhập để thực hiện thao tác này.
+        '403':
+          description: Token hợp lệ nhưng thiếu scope posts:read hoặc không đủ quyền xem
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: INSUFFICIENT_SCOPE
+                message: Không đủ quyền để đọc bài viết.
+        '404':
+          description: Bài viết không tồn tại hoặc được cố ý che giấu theo chính sách riêng tư
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: POST_NOT_FOUND
+                message: Không tìm thấy bài viết.
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token; không gửi refresh token ở header này.
+
+  schemas:
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          format: password
+          minLength: 1
+          maxLength: 1024
+
+    RefreshRequest:
+      type: object
+      additionalProperties: false
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          maxLength: 4096
+          writeOnly: true
+
+    TokenPair:
+      type: object
+      required: [accessToken, tokenType, expiresIn, refreshToken]
+      properties:
+        accessToken:
+          type: string
+          description: Access token ngắn hạn; chỉ trả qua TLS.
+        tokenType:
+          type: string
+          const: Bearer
+        expiresIn:
+          type: integer
+          minimum: 1
+          description: Thời gian sống của access token, tính bằng giây.
+        refreshToken:
+          type: string
+          writeOnly: true
+          description: Refresh token; không ghi vào log.
+
+    Post:
+      type: object
+      required: [id, authorId, content, createdAt]
+      properties:
+        id:
+          type: string
+        authorId:
+          type: string
+        content:
+          type: string
+          maxLength: 5000
+        createdAt:
+          type: string
+          format: date-time
+        visibility:
+          type: string
+          enum: [public, followers, private]
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+          description: ID tương quan để hỗ trợ tra cứu log mà không tiết lộ dữ liệu nhạy cảm.
+
+  responses:
+    BadRequest:
+      description: JSON sai cú pháp hoặc request không hợp lệ
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: BAD_REQUEST
+            message: Yêu cầu không hợp lệ.
+    ValidationError:
+      description: Dữ liệu đúng cú pháp nhưng không đạt kiểm tra trường
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: VALIDATION_ERROR
+            message: Một hoặc nhiều trường không hợp lệ.
+    RateLimited:
+      description: Vượt giới hạn số lần gọi
+      headers:
+        Retry-After:
+          description: Số giây cần chờ trước khi thử lại
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: RATE_LIMITED
+            message: Thử lại sau.
+    InternalError:
+      description: Lỗi máy chủ không dự kiến
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: INTERNAL_ERROR
+            message: Đã xảy ra lỗi máy chủ.

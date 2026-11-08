@@ -1,0 +1,183 @@
+openapi: 3.0.3
+info:
+  title: Products API
+  version: v1
+  description: API quản lý sản phẩm theo hướng design-first.
+servers:
+  - url: http://127.0.0.1:5000
+tags:
+  - name: products
+    description: Quản lý sản phẩm
+paths:
+  /:
+    get:
+      tags: [products]
+      summary: Thông tin API
+      operationId: app.products.api_root
+      responses:
+        '200':
+          description: Liên kết tài liệu API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfo'
+  /api/products/:
+    get:
+      tags: [products]
+      summary: Lấy danh sách sản phẩm
+      operationId: app.products.list_products
+      responses:
+        '200':
+          description: Danh sách sản phẩm
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+    post:
+      tags: [products]
+      summary: Tạo sản phẩm
+      operationId: app.products.create_product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Sản phẩm đã được tạo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/products/{product_id}:
+    parameters:
+      - name: product_id
+        in: path
+        required: true
+        description: ID của sản phẩm
+        schema:
+          type: integer
+          minimum: 1
+    get:
+      tags: [products]
+      summary: Lấy sản phẩm theo ID
+      operationId: app.products.get_product
+      responses:
+        '200':
+          description: Sản phẩm tìm thấy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [products]
+      summary: Cập nhật sản phẩm
+      operationId: app.products.update_product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Sản phẩm đã được cập nhật
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [products]
+      summary: Xóa sản phẩm
+      operationId: app.products.delete_product
+      responses:
+        '200':
+          description: Kết quả xóa sản phẩm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          $ref: '#/components/responses/NotFound'
+components:
+  schemas:
+    ApiInfo:
+      type: object
+      required: [name, version, docs, openapi]
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        docs:
+          type: string
+        openapi:
+          type: string
+    ProductInput:
+      type: object
+      additionalProperties: false
+      required: [name, price]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          format: float
+          minimum: 0
+    Product:
+      type: object
+      required: [id, name, price]
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          format: float
+          minimum: 0
+    Message:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        detail:
+          type: string
+        status:
+          type: integer
+  responses:
+    BadRequest:
+      description: Request body không đúng schema hoặc không hợp lệ
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Không tìm thấy sản phẩm
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'

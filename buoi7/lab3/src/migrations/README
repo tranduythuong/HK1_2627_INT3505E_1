@@ -1,0 +1,4 @@
+Single-database configuration for Flask.
+cd "C:\UET\kiến trúc hướng dịch vụ\code\buoi7\lab3\src"
+python -m flask --app ecommerce_api.main:create_app db upgrade
+python -m flask --app ecommerce_api.main:create_app run --debug

@@ -1,0 +1,24 @@
+services:
+  ecommerce-api:
+    build:
+      context: ../..
+      dockerfile: buoi7/lab3/Dockerfile
+    environment:
+      DATABASE_URL: sqlite:////app/data/ecommerce.db
+    ports:
+      - "5000:5000"
+    volumes:
+      - ecommerce_data:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/ready', timeout=3)"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  ecommerce_data:

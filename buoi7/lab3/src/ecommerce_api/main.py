@@ -8,6 +8,7 @@ from ecommerce_api.Extensions import db, migrate
 from ecommerce_api.api.Orders import order_bp
 from ecommerce_api.api.Products import product_bp
 from ecommerce_api.exceptions.handlers import register_error_handlers
+from ecommerce_api.logging_config import configure as configure_logging
 from ecommerce_api.models.Order import Order
 from ecommerce_api.models.OrderItem import OrderItem
 from ecommerce_api.models.Product import Product
@@ -19,6 +20,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///ecommerce.db"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        LOG_LEVEL=os.environ.get("LOG_LEVEL", "INFO"),
         API_TITLE="Ecommerce API",
         API_VERSION="v1",
         OPENAPI_VERSION="3.0.3",
@@ -29,6 +31,8 @@ def create_app(test_config=None):
     )
     if test_config:
         app.config.update(test_config)
+
+    configure_logging(app)
 
     db.init_app(app)
     migrate.init_app(app, db)

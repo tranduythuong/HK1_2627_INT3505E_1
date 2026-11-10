@@ -28,6 +28,9 @@ def register_error_handlers(app):
         return jsonify({"code": code, "message": message}), status
 
     @app.errorhandler(Exception)
-    def handle_unexpected_error(_error):
-        app.logger.exception("Unhandled application error")
+    def handle_unexpected_error(error):
+        app.logger.error(
+            "request.unhandled_exception",
+            extra={"event": "request.unhandled_exception", "exception_type": type(error).__name__},
+        )
         return jsonify({"code": "internal_error"}), 500

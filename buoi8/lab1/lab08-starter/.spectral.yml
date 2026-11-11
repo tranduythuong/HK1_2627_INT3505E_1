@@ -1,0 +1,48 @@
+extends:
+  - spectral:oas
+functionsDir: ./spectral/functions
+functions:
+  - response-200-has-fields
+rules:
+  operation-operationId:
+    description: Every API operation must have an operationId.
+    message: Operation must have an operationId.
+    severity: error
+    given:
+      - $.paths[*].get
+      - $.paths[*].post
+      - $.paths[*].put
+      - $.paths[*].patch
+      - $.paths[*].delete
+      - $.paths[*].options
+      - $.paths[*].head
+      - $.paths[*].trace
+    then:
+      field: operationId
+      function: truthy
+  no-content-on-204:
+    description: A 204 response cannot declare a response body.
+    message: Response 204 must not define content.
+    severity: error
+    given: $.paths[*][*].responses['204']
+    then:
+      field: content
+      function: falsy
+  book-year-is-integer:
+    description: Book.year must match the integer model field.
+    message: Book.year must have type integer.
+    severity: error
+    given: $.components.schemas.Book.properties.year
+    then:
+      field: type
+      function: enumeration
+      functionOptions:
+        values:
+          - integer
+  response-200-schema-has-fields:
+    description: A successful 200 response schema must expose at least one field.
+    message: Response 200 schema must expose at least one field.
+    severity: error
+    given: $.paths[*][*].responses['200'].content.*.schema
+    then:
+      function: response-200-has-fields

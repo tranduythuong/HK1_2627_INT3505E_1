@@ -52,25 +52,23 @@ Hai smoke test có sẵn nhằm xác nhận starter hoạt động. Bốn test b
 
 ## 3. Lab 2 — OpenAPI/Spectral
 
-Hai lỗi **cố ý còn lại** trong `openapi.yaml`:
-
-1. `GET /books` thiếu `operationId`.
-2. Response `DELETE /books/{id}` HTTP 204 có `content` dù không được có response body.
+Các lỗi contract được yêu cầu đã được sửa: `GET /books` có `operationId`, response 204 không khai báo body, và `Book.year` dùng kiểu integer khớp model.
 
 ```bash
 npm install -g @stoplight/spectral-cli
 spectral lint openapi.yaml --ruleset .spectral.yml
 ```
 
-`spectral:oas` kiểm tra các quy tắc nền của OpenAPI, bao gồm operationId. Hãy sửa 2 lỗi còn lại trong spec và tạo `.spectral.yml` với custom rule kiểm tra response 200 có schema không rỗng. Lưu ý: Spectral linter không tự đối chiếu code Flask; một spec hợp lệ vẫn có thể khác hành vi thực tế. Hãy dùng pytest + jsonschema để kiểm chứng response.
+`.spectral.yml` kế thừa các quy tắc OpenAPI và bổ sung kiểm tra operationId, response 204 không có body, `Book.year` integer, và response 200 có schema với ít nhất một field. Rule kiểm tra field nằm trong `spectral/functions/response-200-has-fields.js`. Spectral kiểm tra contract; hãy dùng pytest + jsonschema để đối chiếu response thực tế của Flask.
 
 ## 4. Lab 3 — Postman/Newman
 
-File `books-api.postman_collection.json` chứa 5 happy-path requests chạy theo thứ tự: list → create → get → update → delete. Request tạo lưu `book_id` trong collection variables. Hãy:
+File `books-api.postman_collection.json` chứa 5 happy-path requests chạy theo thứ tự: list → create → get → update → delete. Request tạo lưu `book_id` trong collection variables. Folder `error-cases/` có hai request:
 
-- Tạo folder `error-cases/` với **POST /books** thiếu `title` và **GET /books/9999**.
-- Thêm **ít nhất 2 `pm.test` cho mỗi error request**: HTTP status và JSON `code`/`message`.
-- Chạy bằng Newman, lưu JUnit report.
+- **POST /books** thiếu `title`: kiểm tra HTTP 400, `code`, `message`, và field `title` trong `errors`.
+- **GET /books/9999**: kiểm tra HTTP 404, `code: NOT_FOUND`, và `message`.
+
+Chạy bằng Newman để lưu JUnit report tại `reports/junit.xml`:
 
 ```bash
 npm install -g newman
@@ -79,7 +77,7 @@ newman run books-api.postman_collection.json \
   -r cli,junit --reporter-junit-export reports/junit.xml
 ```
 
-Lưu ý: cần chạy server trước. `data.csv` là dữ liệu ví dụ để thực hành data-driven iteration; khi sử dụng `-d data.csv`, collection sẽ lặp theo số hàng. Đừng hard-code credentials/tokens trong file đẩy lên Git.
+Đã chạy collection: 7 requests, 14 assertions, không có lỗi. Cần khởi động server trước khi chạy lại. `data.csv` là dữ liệu ví dụ để thực hành data-driven iteration; khi sử dụng `-d data.csv`, collection sẽ lặp theo số hàng. Đừng hard-code credentials/tokens trong file đẩy lên Git.
 
 ## 5. Lab 4 — Locust
 

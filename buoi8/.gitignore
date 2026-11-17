@@ -8,3 +8,10 @@ venv/
 *.sqlite3
 .env
 .DS_Store
+
+# Newman installation and generated test reports
+lab1/lab08-starter/node_modules/
+lab1/lab08-starter/package.json
+lab1/lab08-starter/package-lock.json
+lab1/lab08-starter/junit.xml
+lab1/lab08-starter/reports/junit.xml

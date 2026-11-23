@@ -7,7 +7,7 @@ from sqlalchemy import text
 from ecommerce_api.Extensions import db, migrate
 from ecommerce_api.api.Orders import order_bp
 from ecommerce_api.api.Products import product_bp
-from ecommerce_api.exceptions.handlers import register_error_handlers
+from ecommerce_api.exceptions.Handlers import register_error_handlers
 from ecommerce_api.logging_config import configure as configure_logging
 from ecommerce_api.models.Order import Order
 from ecommerce_api.models.OrderItem import OrderItem

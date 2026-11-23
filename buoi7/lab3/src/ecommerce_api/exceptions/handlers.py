@@ -1,9 +1,24 @@
-import json
-
 from flask import jsonify
 from werkzeug.exceptions import HTTPException
 
 from ecommerce_api.exceptions.AppException import ApiError
+
+
+def _format_message(detail):
+    """Convert Flask-Smorest/Webargs validation details to readable text."""
+    if isinstance(detail, str):
+        return detail
+    if isinstance(detail, (list, tuple)):
+        return "; ".join(filter(None, (_format_message(item) for item in detail)))
+    if isinstance(detail, dict):
+        parts = []
+        for key, value in detail.items():
+            message = _format_message(value)
+            if not message:
+                continue
+            parts.append(message if key == "json" else f"{key}: {message}")
+        return "; ".join(parts)
+    return str(detail)
 
 
 def register_error_handlers(app):
@@ -22,8 +37,7 @@ def register_error_handlers(app):
         error_data = getattr(error, "data", {})
         if isinstance(error_data, dict):
             message = error_data.get("message") or error_data.get("messages") or message
-        if not isinstance(message, str):
-            message = json.dumps(message, ensure_ascii=False)
+        message = _format_message(message)
 
         return jsonify({"code": code, "message": message}), status
 
